@@ -7,7 +7,7 @@ data1 = [
     [1, 1, 1]
 ]
 
-answers1 = [0]
+answers1 = [1, 0]
 
 hidden_layer_weights = [
     [  # 1st hidden unit
@@ -30,9 +30,7 @@ hidden_layer_weights = [
     ]
 ]
 
-thresholds = [0.97, 0.92, 0.94]
-
-def sum_of_productx(data, weights):
+def sum_of_product(data, weights):
     total = 0.0
     for i in range(len(data)):
         for j in range(len(data[0])):
@@ -40,20 +38,51 @@ def sum_of_productx(data, weights):
             total += data[i][j] * weights[i][j]
     return total
 
-layer1_sumofProduct = sum_of_product(data1, hidden_layer_weights[0])
-layer2_sumofProduct = sum_of_product(data1, hidden_layer_weights[1])
-layer3_sumofProduct = sum_of_product(data1, hidden_layer_weights[2])
-print("Layer 1 sum of product:", layer1_sumofProduct)
-print("Layer 2 sum of product:", layer2_sumofProduct)
-print("Layer 3 sum of product:", layer3_sumofProduct)
+thresholds = [0.97,	0.92, 0.94]
+layer1_1_sumofProduct = sum_of_product(data1, hidden_layer_weights[0])
+layer1_2_sumofProduct = sum_of_product(data1, hidden_layer_weights[1])
+layer1_3_sumofProduct = sum_of_product(data1, hidden_layer_weights[2])
+print("Layer 1 sum of product:", layer1_1_sumofProduct)
+print("Layer 2 sum of product:", layer1_2_sumofProduct)
+print("Layer 3 sum of product:", layer1_3_sumofProduct)
 
-exp1 = 1/(1+math.exp(-layer1_sumofProduct+thresholds[0]))
-exp2 = 1/(1+math.exp(-layer2_sumofProduct+thresholds[1]))
-exp3 = 1/(1+math.exp(-layer3_sumofProduct+thresholds[2]))
+
+exp1 = 1/(1+math.exp(-layer1_1_sumofProduct+thresholds[0]))
+exp2 = 1/(1+math.exp(-layer1_2_sumofProduct+thresholds[1]))
+exp3 = 1/(1+math.exp(-layer1_3_sumofProduct+thresholds[2]))
 print("exp1:", exp1)
 print("exp2:", exp2)
 print("exp3:", exp3)
 
+print("-------------------------")
+thresholds = [0.18, 0.92, 0.06 ]
+layer2_1_sumofProduct=exp1 * thresholds[0] + exp2 * thresholds[1] + exp3 * thresholds[2]
+出力z_1 = 1/(1+math.exp(-layer2_1_sumofProduct+1.00))
+thresholds = [0.99, 0.10, 0.84 ]
+layer2_2_sumofProduct=exp1 * thresholds[0] + exp2 * thresholds[1] + exp3 * thresholds[2]
+出力z_2 = 1/(1+math.exp(-layer2_2_sumofProduct+0.94))
+print("出力z_1:", 出力z_1)
+print("出力z_2:", 出力z_2)
 
+# Example usage:
+# =SUMXMY2(J7:K7,J17:K17)
+# SUMXMY2([出力z_1, 出力z_2], [target1, target2])
 
+def SUMXMY2(array1, array2):
+    """
+    Excel SUMXMY2 function: Returns the sum of squares of differences of corresponding values
+    Formula: sum((x - y)^2) for each pair of values
+    """
+    if len(array1) != len(array2):
+        raise ValueError("Arrays must have the same length")
+    
+    total = 0
+    for i in range(len(array1)):
+        diff = array1[i] - array2[i]
+        total += diff * diff
+    
+    return total
 
+print("-------------------------")
+誤差Q=SUMXMY2([出力z_1, 出力z_2], answers1)
+print("誤差Q:", 誤差Q)
