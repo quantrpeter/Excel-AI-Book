@@ -143,7 +143,7 @@ def total_error(params):
 	total = 0.0
 	for sample in data:
 		out = forward(sample, params)
-		total += SUMXMY2(out, answers1)
+		total += SUMXMY2(out, answers1) # 誤差Q
 	return total
 
 
