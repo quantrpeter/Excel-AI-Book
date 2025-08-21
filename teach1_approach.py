@@ -68,150 +68,52 @@ def sum_of_product(data, weights):
 			# print(data[i][j], "*", weights[i][j])
 			total += data[i][j] * weights[i][j]
 	return total
-def sigmoid(x):
-	# numerically stable sigmoid
-	try:
-		return 1.0 / (1.0 + math.exp(-x))
-	except OverflowError:
-		return 0.0 if x < 0 else 1.0
 
+for i in range(len(data)):
+	layer1_1_sumofProduct = sum_of_product(data[i], hidden_layer_weights[0])
+	layer1_2_sumofProduct = sum_of_product(data[i], hidden_layer_weights[1])
+	layer1_3_sumofProduct = sum_of_product(data[i], hidden_layer_weights[2])
+	# print("Layer 1 sum of product:", layer1_1_sumofProduct)
+	# print("Layer 2 sum of product:", layer1_2_sumofProduct)
+	# print("Layer 3 sum of product:", layer1_3_sumofProduct)
 
-def SUMXMY2(array1, array2):
-	if len(array1) != len(array2):
-		raise ValueError("Arrays must have the same length")
-	total = 0.0
-	for i in range(len(array1)):
-		diff = array1[i] - array2[i]
-		total += diff * diff
-	return total
+	exp1 = 1/(1+math.exp(-layer1_1_sumofProduct+thresholds[0]))
+	exp2 = 1/(1+math.exp(-layer1_2_sumofProduct+thresholds[1]))
+	exp3 = 1/(1+math.exp(-layer1_3_sumofProduct+thresholds[2]))
+	# print("exp1:", exp1)
+	# print("exp2:", exp2)
+	# print("exp3:", exp3)
 
+	# print("-------------------------")
+	layer2_1_sumofProduct = exp1 * \
+		thresholds1[0] + exp2 * thresholds1[1] + exp3 * thresholds1[2]
+	出力z_1 = 1/(1+math.exp(-layer2_1_sumofProduct+thresholds3[0]))
 
-def forward(sample, params):
-	"""Compute two outputs for one sample using packed params."""
-	# unpack params
-	idx = 0
-	hidden_layer_weights_p = []
-	for h in range(3):
-		unit = []
-		for r in range(4):
-			row = []
-			for c in range(3):
-				row.append(params[idx]); idx += 1
-			unit.append(row)
-		hidden_layer_weights_p.append(unit)
+	layer2_2_sumofProduct = exp1 * \
+		thresholds2[0] + exp2 * thresholds2[1] + exp3 * thresholds2[2]
+	出力z_2 = 1/(1+math.exp(-layer2_2_sumofProduct+thresholds3[1]))
+	# print("出力z_1:", 出力z_1)
+	# print("出力z_2:", 出力z_2)
 
-	thresholds_p = [params[idx + i] for i in range(3)]; idx += 3
-	thresholds1_p = [params[idx + i] for i in range(3)]; idx += 3
-	thresholds2_p = [params[idx + i] for i in range(3)]; idx += 3
-	thresholds3_p = [params[idx + i] for i in range(2)]; idx += 2
+	# Example usage:
+	# =SUMXMY2(J7:K7,J17:K17)
+	# SUMXMY2([出力z_1, 出力z_2], [target1, target2])
 
-	# hidden layer
-	exps = []
-	for h in range(3):
-		s = sum_of_product(sample, hidden_layer_weights_p[h])
-		exps.append(sigmoid(s - thresholds_p[h]))
+	def SUMXMY2(array1, array2):
+		"""
+		Excel SUMXMY2 function: Returns the sum of squares of differences of corresponding values
+		Formula: sum((x - y)^2) for each pair of values
+		"""
+		if len(array1) != len(array2):
+			raise ValueError("Arrays must have the same length")
 
-	# output layer
-	layer2_1_sum = exps[0] * thresholds1_p[0] + exps[1] * thresholds1_p[1] + exps[2] * thresholds1_p[2]
-	z1 = sigmoid(layer2_1_sum - thresholds3_p[0])
+		total = 0
+		for i in range(len(array1)):
+			diff = array1[i] - array2[i]
+			total += diff * diff
 
-	layer2_2_sum = exps[0] * thresholds2_p[0] + exps[1] * thresholds2_p[1] + exps[2] * thresholds2_p[2]
-	z2 = sigmoid(layer2_2_sum - thresholds3_p[1])
+		return total
 
-	return [z1, z2]
-
-
-def pack_initial_params():
-	# pack the original variables (lines 39-62) into a flat list
-	params = []
-	for h in hidden_layer_weights:
-		for row in h:
-			for v in row:
-				params.append(v)
-	for v in thresholds:
-		params.append(v)
-	for v in thresholds1:
-		params.append(v)
-	for v in thresholds2:
-		params.append(v)
-	for v in thresholds3:
-		params.append(v)
-	return params
-
-
-def total_error(params):
-	total = 0.0
-	for sample in data:
-		out = forward(sample, params)
-		total += SUMXMY2(out, answers1)
-	return total
-
-
-def train(params, iterations=2000, init_step=0.05, decay=0.999):
-	"""Simple stochastic hill-climbing with small random perturbations."""
-	best = list(params)
-	best_err = total_error(best)
-	step = init_step
-	for it in range(iterations):
-		candidate = [best[i] + random.gauss(0, step) for i in range(len(best))]
-		err = total_error(candidate)
-		if err < best_err:
-			best, best_err = candidate, err
-		# small probability to accept worse solution (helps escape local minima)
-		elif random.random() < 0.001:
-			best, best_err = candidate, err
-		step *= decay
-		# occasional progress print
-		if (it + 1) % 500 == 0:
-			print(f"iter {it+1}: best_err={best_err:.6f}, step={step:.6f}")
-	return best, best_err
-
-
-if __name__ == '__main__':
-	# Prepare initial params and train
-	init_params = pack_initial_params()
-	print("Initial total error:", total_error(init_params))
-	tuned_params, tuned_err = train(init_params, iterations=3000, init_step=0.05, decay=0.9995)
-	print("Tuned total error:", tuned_err)
-
-	# unpack tuned params back into the named variables and print/dump them
-	idx = 0
-	tuned_hidden = []
-	for h in range(3):
-		unit = []
-		for r in range(4):
-			row = []
-			for c in range(3):
-				row.append(tuned_params[idx]); idx += 1
-			unit.append(row)
-		tuned_hidden.append(unit)
-
-	tuned_thresholds = [tuned_params[idx + i] for i in range(3)]; idx += 3
-	tuned_thresholds1 = [tuned_params[idx + i] for i in range(3)]; idx += 3
-	tuned_thresholds2 = [tuned_params[idx + i] for i in range(3)]; idx += 3
-	tuned_thresholds3 = [tuned_params[idx + i] for i in range(2)]; idx += 2
-
-	# print results
-	print('\n--- Tuned parameters ---')
-	print('hidden_layer_weights =', tuned_hidden)
-	print('thresholds =', tuned_thresholds)
-	print('thresholds1 =', tuned_thresholds1)
-	print('thresholds2 =', tuned_thresholds2)
-	print('thresholds3 =', tuned_thresholds3)
-
-	# save to json for later reuse
-	try:
-		import json
-		out = {
-			'hidden_layer_weights': tuned_hidden,
-			'thresholds': tuned_thresholds,
-			'thresholds1': tuned_thresholds1,
-			'thresholds2': tuned_thresholds2,
-			'thresholds3': tuned_thresholds3,
-			'total_error': tuned_err
-		}
-		with open('tuned_params.json', 'w') as f:
-			json.dump(out, f, indent=2)
-		print('\nSaved tuned parameters to tuned_params.json')
-	except Exception as e:
-		print('Failed to save tuned params:', e)
+	# print("-------------------------")
+	誤差Q = SUMXMY2([出力z_1, 出力z_2], answers1)
+	print("誤差Q:", 誤差Q)

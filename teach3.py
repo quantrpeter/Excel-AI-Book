@@ -1,16 +1,37 @@
 import math
+import random
 
-# data1 = [
-#     [1, 1, 1],
-#     [1, 0, 1],
-#     [1, 0, 1],
-#     [1, 1, 1]
-# ]
-data1 = [
-    [0, 1, 1],
-    [1, 0, 1],
-    [1, 0, 1],
-    [1, 1, 1]
+data = [
+	[
+		[0, 1, 1],
+		[1, 0, 1],
+		[1, 0, 1],
+		[1, 1, 1]
+	],
+	[
+		[0, 1, 1],
+		[1, 0, 1],
+		[1, 0, 1],
+		[1, 1, 1]
+	],
+	[
+		[1, 1, 0],
+		[1, 0, 1],
+		[1, 0, 1],
+		[1, 1, 1]
+	],
+	[
+		[1, 1, 1],
+		[1, 0, 1],
+		[1, 0, 1],
+		[1, 1, 0]
+	],
+	[
+		[1, 1, 1],
+		[1, 0, 1],
+		[1, 0, 1],
+		[0, 1, 1]
+	]
 ]
 
 answers1 = [1, 0]
@@ -21,63 +42,59 @@ thresholds1 = [8.797650827959663, 10.282872320778907, 9.065586991033085]
 thresholds2 = [-10.405211450375178, -9.873479166230588, -11.621294374816904]
 thresholds3 = [-7.957494877968446, 10.46222659884424]
 
-
 def sum_of_product(data, weights):
-    total = 0.0
-    for i in range(len(data)):
-        for j in range(len(data[0])):
-            # print(data[i][j], "*", weights[i][j])
-            total += data[i][j] * weights[i][j]
-    return total
+	total = 0.0
+	for i in range(len(data)):
+		for j in range(len(data[0])):
+			# print(data[i][j], "*", weights[i][j])
+			total += data[i][j] * weights[i][j]
+	return total
 
+for i in range(len(data)):
+	layer1_1_sumofProduct = sum_of_product(data[i], hidden_layer_weights[0])
+	layer1_2_sumofProduct = sum_of_product(data[i], hidden_layer_weights[1])
+	layer1_3_sumofProduct = sum_of_product(data[i], hidden_layer_weights[2])
+	# print("Layer 1 sum of product:", layer1_1_sumofProduct)
+	# print("Layer 2 sum of product:", layer1_2_sumofProduct)
+	# print("Layer 3 sum of product:", layer1_3_sumofProduct)
 
-layer1_1_sumofProduct = sum_of_product(data1, hidden_layer_weights[0])
-layer1_2_sumofProduct = sum_of_product(data1, hidden_layer_weights[1])
-layer1_3_sumofProduct = sum_of_product(data1, hidden_layer_weights[2])
-print("Layer 1 sum of product:", layer1_1_sumofProduct)
-print("Layer 2 sum of product:", layer1_2_sumofProduct)
-print("Layer 3 sum of product:", layer1_3_sumofProduct)
+	exp1 = 1/(1+math.exp(-layer1_1_sumofProduct+thresholds[0]))
+	exp2 = 1/(1+math.exp(-layer1_2_sumofProduct+thresholds[1]))
+	exp3 = 1/(1+math.exp(-layer1_3_sumofProduct+thresholds[2]))
+	# print("exp1:", exp1)
+	# print("exp2:", exp2)
+	# print("exp3:", exp3)
 
+	# print("-------------------------")
+	layer2_1_sumofProduct = exp1 * \
+		thresholds1[0] + exp2 * thresholds1[1] + exp3 * thresholds1[2]
+	出力z_1 = 1/(1+math.exp(-layer2_1_sumofProduct+thresholds3[0]))
 
-exp1 = 1/(1+math.exp(-layer1_1_sumofProduct+thresholds[0]))
-exp2 = 1/(1+math.exp(-layer1_2_sumofProduct+thresholds[1]))
-exp3 = 1/(1+math.exp(-layer1_3_sumofProduct+thresholds[2]))
-print("exp1:", exp1)
-print("exp2:", exp2)
-print("exp3:", exp3)
+	layer2_2_sumofProduct = exp1 * \
+		thresholds2[0] + exp2 * thresholds2[1] + exp3 * thresholds2[2]
+	出力z_2 = 1/(1+math.exp(-layer2_2_sumofProduct+thresholds3[1]))
+	# print("出力z_1:", 出力z_1)
+	# print("出力z_2:", 出力z_2)
 
-print("-------------------------")
-layer2_1_sumofProduct = exp1 * \
-    thresholds1[0] + exp2 * thresholds1[1] + exp3 * thresholds1[2]
-出力z_1 = 1/(1+math.exp(-layer2_1_sumofProduct+thresholds3[0]))
+	# Example usage:
+	# =SUMXMY2(J7:K7,J17:K17)
+	# SUMXMY2([出力z_1, 出力z_2], [target1, target2])
 
-layer2_2_sumofProduct = exp1 * \
-    thresholds2[0] + exp2 * thresholds2[1] + exp3 * thresholds2[2]
-出力z_2 = 1/(1+math.exp(-layer2_2_sumofProduct+thresholds3[1]))
-print("出力z_1:", 出力z_1)
-print("出力z_2:", 出力z_2)
+	def SUMXMY2(array1, array2):
+		"""
+		Excel SUMXMY2 function: Returns the sum of squares of differences of corresponding values
+		Formula: sum((x - y)^2) for each pair of values
+		"""
+		if len(array1) != len(array2):
+			raise ValueError("Arrays must have the same length")
 
-# Example usage:
-# =SUMXMY2(J7:K7,J17:K17)
-# SUMXMY2([出力z_1, 出力z_2], [target1, target2])
+		total = 0
+		for i in range(len(array1)):
+			diff = array1[i] - array2[i]
+			total += diff * diff
 
+		return total
 
-def SUMXMY2(array1, array2):
-    """
-    Excel SUMXMY2 function: Returns the sum of squares of differences of corresponding values
-    Formula: sum((x - y)^2) for each pair of values
-    """
-    if len(array1) != len(array2):
-        raise ValueError("Arrays must have the same length")
-
-    total = 0
-    for i in range(len(array1)):
-        diff = array1[i] - array2[i]
-        total += diff * diff
-
-    return total
-
-
-print("-------------------------")
-誤差Q = SUMXMY2([出力z_1, 出力z_2], answers1)
-print("誤差Q:", 誤差Q)
+	# print("-------------------------")
+	誤差Q = SUMXMY2([出力z_1, 出力z_2], answers1)
+	print("誤差Q:", 誤差Q)
